@@ -1,0 +1,31 @@
+rei_id,rei_name,Deaths,DALYs,YLLs,YLDs,measure_count
+86,Ambient particulate matter pollution,True,False,False,True,2
+87,Household air pollution from solid fuels,True,False,False,True,2
+91,Lead exposure,True,True,True,True,4
+95,Iron deficiency,False,True,False,False,1
+96,Vitamin A deficiency,False,True,False,False,1
+99,Smoking,True,True,True,True,4
+100,Secondhand smoke,True,True,True,True,4
+102,High alcohol use,True,True,True,True,4
+103,Drug use,False,True,False,False,1
+105,High fasting plasma glucose,True,True,True,True,4
+107,High systolic blood pressure,True,True,True,True,4
+108,High body-mass index,True,True,True,True,4
+115,Diet low in milk,False,True,False,False,1
+116,Diet high in red meat,True,True,True,True,4
+117,Diet high in processed meat,True,True,True,True,4
+118,Diet high in sugar-sweetened beverages,True,True,True,True,4
+119,Diet low in fiber,True,True,True,True,4
+121,Diet low in seafood omega-3 fatty acids,True,True,True,True,4
+122,Diet low in omega-6 polyunsaturated fatty acids,True,True,True,True,4
+123,Diet high in trans fatty acids,True,True,True,True,4
+124,Diet high in sodium,True,True,True,True,4
+125,Low physical activity,True,True,True,True,4
+147,Diet low in calcium,False,True,False,False,1
+169,All risk factors,False,True,False,False,1
+332,Chewing tobacco,True,True,True,True,4
+337,High temperature,True,True,True,False,3
+338,Low temperature,True,True,True,False,3
+341,Kidney dysfunction,True,True,True,True,4
+367,High LDL cholesterol,True,True,True,True,4
+380,Particulate matter pollution,True,True,True,True,4

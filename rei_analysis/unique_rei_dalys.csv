@@ -1,0 +1,29 @@
+rei_id,rei_name
+91,Lead exposure
+95,Iron deficiency
+96,Vitamin A deficiency
+99,Smoking
+100,Secondhand smoke
+102,High alcohol use
+103,Drug use
+105,High fasting plasma glucose
+107,High systolic blood pressure
+108,High body-mass index
+115,Diet low in milk
+116,Diet high in red meat
+117,Diet high in processed meat
+118,Diet high in sugar-sweetened beverages
+119,Diet low in fiber
+121,Diet low in seafood omega-3 fatty acids
+122,Diet low in omega-6 polyunsaturated fatty acids
+123,Diet high in trans fatty acids
+124,Diet high in sodium
+125,Low physical activity
+147,Diet low in calcium
+169,All risk factors
+332,Chewing tobacco
+337,High temperature
+338,Low temperature
+341,Kidney dysfunction
+367,High LDL cholesterol
+380,Particulate matter pollution

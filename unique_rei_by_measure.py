@@ -298,7 +298,6 @@ def main():
         print("Example:")
         print(
             r"python unique_rei_by_measure.py "
-            r".\normalise_gbd_dataset\"
         )
 
         sys.exit(1)
