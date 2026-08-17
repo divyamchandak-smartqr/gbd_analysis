@@ -285,7 +285,6 @@ def main():
 
         print(
             r"python annual_trend_analysis.py "
-            r".\normalise_gbd_dataset\"
         )
 
         sys.exit(1)
