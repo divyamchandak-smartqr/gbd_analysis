@@ -3,37 +3,16 @@ from pathlib import Path
 import pandas as pd
 
 
-# ============================================================
-# USAGE
-# ============================================================
-# python unique_rei_by_measure.py <folder>
-#
-# Example:
-# python unique_rei_by_measure.py .\normalise_gbd_dataset\
-#
-# The folder can contain any number of nested subfolders.
-# The script recursively finds every CSV.
-# ============================================================
+MEASURES = ["Deaths", "DALYs", "YLLs", "YLDs"]
 
 
 def get_measure_from_path(csv_path, root):
     """
-    Determine the GBD measure from the folder structure.
-
-    Expected structure somewhere below root:
-
-        Deaths/
-        DALYs/
-        YLLs/
-        YLDs/
-
-    Example:
-        normalise_gbd_dataset/Deaths/Behaviour/file.csv
+    Identify the GBD measure from the folder structure.
     """
-
     relative_parts = csv_path.relative_to(root).parts
 
-    measures = {
+    measure_map = {
         "deaths": "Deaths",
         "dalys": "DALYs",
         "ylls": "YLLs",
@@ -43,39 +22,40 @@ def get_measure_from_path(csv_path, root):
     for part in relative_parts:
         key = part.strip().lower()
 
-        if key in measures:
-            return measures[key]
+        if key in measure_map:
+            return measure_map[key]
 
     return None
 
 
 def scan_files(root):
     """
-    Recursively scan all CSV files and extract unique
-    rei_id / rei_name combinations by measure.
+    Recursively scan all CSV files and collect unique
+    (rei_id, rei_name) pairs for each measure.
     """
 
     results = {
-        "Deaths": set(),
-        "DALYs": set(),
-        "YLLs": set(),
-        "YLDs": set(),
+        measure: set()
+        for measure in MEASURES
     }
 
-    all_csv_files = list(root.rglob("*.csv"))
+    csv_files = list(root.rglob("*.csv"))
 
     print("=" * 80)
     print("GBD UNIQUE REI ID / NAME SCANNER")
     print("=" * 80)
     print(f"Root folder : {root.resolve()}")
-    print(f"CSV files   : {len(all_csv_files)}")
+    print(f"CSV files   : {len(csv_files)}")
     print()
 
     skipped = []
 
-    for csv_file in all_csv_files:
+    for csv_file in csv_files:
 
-        measure = get_measure_from_path(csv_file, root)
+        measure = get_measure_from_path(
+            csv_file,
+            root
+        )
 
         if measure is None:
             skipped.append(csv_file)
@@ -101,9 +81,13 @@ def scan_files(root):
             )
             continue
 
-        df = df[
-            ["rei_id", "rei_name"]
-        ].dropna().drop_duplicates()
+        df = (
+            df[
+                ["rei_id", "rei_name"]
+            ]
+            .dropna()
+            .drop_duplicates()
+        )
 
         for _, row in df.iterrows():
 
@@ -112,7 +96,9 @@ def scan_files(root):
             except (ValueError, TypeError):
                 continue
 
-            rei_name = str(row["rei_name"]).strip()
+            rei_name = str(
+                row["rei_name"]
+            ).strip()
 
             results[measure].add(
                 (rei_id, rei_name)
@@ -123,17 +109,23 @@ def scan_files(root):
 
 def make_dataframe(values):
     """
-    Convert set of (rei_id, rei_name) into DataFrame.
+    Convert unique REI pairs into a DataFrame.
     """
 
     if not values:
         return pd.DataFrame(
-            columns=["rei_id", "rei_name"]
+            columns=[
+                "rei_id",
+                "rei_name"
+            ]
         )
 
     df = pd.DataFrame(
         sorted(values),
-        columns=["rei_id", "rei_name"]
+        columns=[
+            "rei_id",
+            "rei_name"
+        ]
     )
 
     return df
@@ -141,16 +133,16 @@ def make_dataframe(values):
 
 def check_consistency(df, measure):
     """
-    Check whether the same rei_id appears with
-    different names or the same name appears with
-    different IDs.
+    Check:
+      1. One rei_id -> multiple names
+      2. One rei_name -> multiple IDs
     """
 
     if df.empty:
         return
 
     # --------------------------------------------------------
-    # Same ID -> multiple names
+    # Same rei_id -> multiple rei_name
     # --------------------------------------------------------
 
     id_check = (
@@ -158,12 +150,15 @@ def check_consistency(df, measure):
         .nunique()
     )
 
-    bad_ids = id_check[id_check > 1]
+    bad_ids = id_check[
+        id_check > 1
+    ]
 
     if not bad_ids.empty:
 
+        print()
         print(
-            f"\n[{measure}] WARNING: "
+            f"[{measure}] WARNING: "
             "rei_id mapped to multiple rei_name values"
         )
 
@@ -176,10 +171,12 @@ def check_consistency(df, measure):
                 ].unique()
             )
 
-            print(f"  {rei_id}: {names}")
+            print(
+                f"  {rei_id}: {names}"
+            )
 
     # --------------------------------------------------------
-    # Same name -> multiple IDs
+    # Same rei_name -> multiple rei_id
     # --------------------------------------------------------
 
     name_check = (
@@ -187,12 +184,15 @@ def check_consistency(df, measure):
         .nunique()
     )
 
-    bad_names = name_check[name_check > 1]
+    bad_names = name_check[
+        name_check > 1
+    ]
 
     if not bad_names.empty:
 
+        print()
         print(
-            f"\n[{measure}] WARNING: "
+            f"[{measure}] WARNING: "
             "rei_name mapped to multiple rei_id values"
         )
 
@@ -205,13 +205,23 @@ def check_consistency(df, measure):
                 ].unique()
             )
 
-            print(f"  {name}: {ids}")
+            print(
+                f"  {name}: {ids}"
+            )
 
 
 def create_comparison(dataframes):
     """
-    Create one master table showing whether every REI
-    exists in each measure.
+    Create master comparison table.
+
+    Columns:
+        rei_id
+        rei_name
+        Deaths
+        DALYs
+        YLLs
+        YLDs
+        measure_count
     """
 
     all_pairs = set()
@@ -236,39 +246,33 @@ def create_comparison(dataframes):
             "rei_name": rei_name,
         }
 
-        for measure in [
-            "Deaths",
-            "DALYs",
-            "YLLs",
-            "YLDs"
-        ]:
+        for measure in MEASURES:
 
-            if dataframes[measure].empty:
+            df = dataframes[measure]
+
+            if df.empty:
 
                 row[measure] = False
 
             else:
 
-                row[measure] = (
+                exists = (
                     (
-                        dataframes[measure]["rei_id"]
-                        == rei_id
+                        df["rei_id"] == rei_id
                     )
                     &
                     (
-                        dataframes[measure]["rei_name"]
-                        == rei_name
+                        df["rei_name"] == rei_name
                     )
                 ).any()
 
+                row[measure] = bool(
+                    exists
+                )
+
         row["measure_count"] = sum(
-            row[m]
-            for m in [
-                "Deaths",
-                "DALYs",
-                "YLLs",
-                "YLDs"
-            ]
+            row[measure]
+            for measure in MEASURES
         )
 
         rows.append(row)
@@ -279,27 +283,35 @@ def create_comparison(dataframes):
 def main():
 
     # ========================================================
-    # CHECK ARGUMENT
+    # COMMAND LINE ARGUMENT
     # ========================================================
 
     if len(sys.argv) != 2:
 
+        print()
+        print("Usage:")
         print(
-            "\nUsage:\n"
-            "    python unique_rei_by_measure.py <folder>\n\n"
-            "Example:\n"
-            "    python unique_rei_by_measure.py "
-            ".\\normalise_gbd_dataset\\"
+            "python unique_rei_by_measure.py "
+            "<folder>"
+        )
+        print()
+        print("Example:")
+        print(
+            r"python unique_rei_by_measure.py "
+            r".\normalise_gbd_dataset\"
         )
 
         sys.exit(1)
 
-    root = Path(sys.argv[1])
+    root = Path(
+        sys.argv[1]
+    )
 
     if not root.exists():
 
+        print()
         print(
-            f"\nERROR: Folder does not exist:\n"
+            f"ERROR: Folder does not exist:\n"
             f"{root.resolve()}"
         )
 
@@ -307,8 +319,9 @@ def main():
 
     if not root.is_dir():
 
+        print()
         print(
-            f"\nERROR: Path is not a folder:\n"
+            f"ERROR: Path is not a folder:\n"
             f"{root.resolve()}"
         )
 
@@ -318,23 +331,29 @@ def main():
     # SCAN
     # ========================================================
 
-    results, skipped = scan_files(root)
-
-    output_dir = Path("rei_analysis")
-    output_dir.mkdir(exist_ok=True)
+    results, skipped = scan_files(
+        root
+    )
 
     # ========================================================
-    # CREATE INDIVIDUAL MEASURE TABLES
+    # OUTPUT DIRECTORY
     # ========================================================
+
+    output_dir = Path(
+        "rei_analysis"
+    )
+
+    output_dir.mkdir(
+        exist_ok=True
+    )
 
     dataframes = {}
 
-    for measure in [
-        "Deaths",
-        "DALYs",
-        "YLLs",
-        "YLDs"
-    ]:
+    # ========================================================
+    # INDIVIDUAL MEASURE RESULTS
+    # ========================================================
+
+    for measure in MEASURES:
 
         df = make_dataframe(
             results[measure]
@@ -361,10 +380,12 @@ def main():
         print("=" * 80)
         print(measure)
         print("=" * 80)
+
         print(
             f"Unique rei_id / rei_name pairs: "
             f"{len(df)}"
         )
+
         print(
             f"Output: {output_file}"
         )
@@ -415,25 +436,21 @@ def main():
     print("SUMMARY")
     print("=" * 80)
 
-    for measure in [
-        "Deaths",
-        "DALYs",
-        "YLLs",
-        "YLDs"
-    ]:
+    for measure in MEASURES:
 
         print(
             f"{measure:<10}: "
             f"{len(dataframes[measure])}"
         )
 
+    print()
     print(
-        f"\nTotal unique REI pairs: "
+        f"Total unique REI pairs: "
         f"{len(comparison)}"
     )
 
     # ========================================================
-    # MEASURE COVERAGE
+    # MISSING REI BY MEASURE
     # ========================================================
 
     print()
@@ -441,12 +458,7 @@ def main():
     print("MISSING REI BY MEASURE")
     print("=" * 80)
 
-    for measure in [
-        "Deaths",
-        "DALYs",
-        "YLLs",
-        "YLDs"
-    ]:
+    for measure in MEASURES:
 
         missing = comparison[
             comparison[measure] == False
@@ -472,7 +484,7 @@ def main():
             )
 
     # ========================================================
-    # REI PRESENT IN ALL FOUR
+    # PRESENT IN ALL FOUR
     # ========================================================
 
     all_four = comparison[
@@ -502,7 +514,7 @@ def main():
         )
 
     # ========================================================
-    # REI NOT PRESENT IN ALL FOUR
+    # NOT PRESENT IN ALL FOUR
     # ========================================================
 
     not_all_four = comparison[
@@ -513,6 +525,10 @@ def main():
     print("=" * 80)
     print("REI NOT PRESENT IN ALL FOUR MEASURES")
     print("=" * 80)
+
+    print(
+        f"Count: {len(not_all_four)}"
+    )
 
     if not not_all_four.empty:
 
@@ -526,19 +542,10 @@ def main():
                     "YLLs",
                     "YLDs",
                     "measure_count"
-                ].__str__()
-                if False
-                else not_all_four[
-                    [
-                        "rei_id",
-                        "rei_name",
-                        "Deaths",
-                        "DALYs",
-                        "YLLs",
-                        "YLDs",
-                        "measure_count"
-                    ]
-                ].to_string(index=False)
+                ]
+            ].to_string(
+                index=False
+            )
         )
 
     # ========================================================
@@ -549,14 +556,17 @@ def main():
 
         print()
         print("=" * 80)
-        print("FILES WITHOUT A RECOGNIZED MEASURE FOLDER")
+        print(
+            "FILES WITHOUT A RECOGNIZED "
+            "MEASURE FOLDER"
+        )
         print("=" * 80)
 
         for file in skipped:
             print(file)
 
     # ========================================================
-    # FINISHED
+    # DONE
     # ========================================================
 
     print()
@@ -564,8 +574,9 @@ def main():
     print("DONE")
     print("=" * 80)
 
+    print()
     print(
-        f"\nResults saved in:\n"
+        f"Results saved in:\n"
         f"{output_dir.resolve()}"
     )
 
