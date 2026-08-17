@@ -1,0 +1,31 @@
+rei_id,rei_name,Deaths,DALYs,YLLs,YLDs
+86,Ambient particulate matter pollution,YES,NO,NO,YES
+87,Household air pollution from solid fuels,YES,NO,NO,YES
+91,Lead exposure,YES,YES,YES,YES
+95,Iron deficiency,NO,YES,NO,NO
+96,Vitamin A deficiency,NO,YES,NO,NO
+99,Smoking,YES,YES,YES,YES
+100,Secondhand smoke,YES,YES,YES,YES
+102,High alcohol use,YES,YES,YES,YES
+103,Drug use,NO,YES,NO,NO
+105,High fasting plasma glucose,YES,YES,YES,YES
+107,High systolic blood pressure,YES,YES,YES,YES
+108,High body-mass index,YES,YES,YES,YES
+115,Diet low in milk,NO,YES,NO,NO
+116,Diet high in red meat,YES,YES,YES,YES
+117,Diet high in processed meat,YES,YES,YES,YES
+118,Diet high in sugar-sweetened beverages,YES,YES,YES,YES
+119,Diet low in fiber,YES,YES,YES,YES
+121,Diet low in seafood omega-3 fatty acids,YES,YES,YES,YES
+122,Diet low in omega-6 polyunsaturated fatty acids,YES,YES,YES,YES
+123,Diet high in trans fatty acids,YES,YES,YES,YES
+124,Diet high in sodium,YES,YES,YES,YES
+125,Low physical activity,YES,YES,YES,YES
+147,Diet low in calcium,NO,YES,NO,NO
+169,All risk factors,NO,YES,NO,NO
+332,Chewing tobacco,YES,YES,YES,YES
+337,High temperature,YES,YES,YES,NO
+338,Low temperature,YES,YES,YES,NO
+341,Kidney dysfunction,YES,YES,YES,YES
+367,High LDL cholesterol,YES,YES,YES,YES
+380,Particulate matter pollution,YES,YES,YES,YES

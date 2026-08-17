@@ -1,304 +1,706 @@
 import sys
 from pathlib import Path
+
 import pandas as pd
+import matplotlib.pyplot as plt
 
 
-MEASURES = ["Deaths", "DALYs", "YLLs", "YLDs"]
+# ============================================================
+# SECTION 10 — ANNUAL TREND ANALYSIS
+# ============================================================
+#
+# Purpose:
+# Determine whether burden for each risk factor is:
+# Increasing / Decreasing / Stable
+#
+# Formula:
+#
+# YoY % =
+# (Current Year - Previous Year)
+# / Previous Year * 100
+#
+#
+# Usage:
+#
+# python annual_trend_analysis.py .\normalise_gbd_dataset\
+#
+# ============================================================
 
 
-def get_measure_from_path(csv_path, root):
-    """
-    Identify the GBD measure from the folder structure.
-    """
-    relative_parts = csv_path.relative_to(root).parts
+# ============================================================
+# SETTINGS
+# ============================================================
 
-    measure_map = {
-        "deaths": "Deaths",
-        "dalys": "DALYs",
-        "ylls": "YLLs",
-        "ylds": "YLDs",
-    }
+MEASURE = "DALYs"
 
-    for part in relative_parts:
-        key = part.strip().lower()
+# IMPORTANT:
+# Change this to "Rate" if Section 10 should use Rate.
+METRIC = "Number"
 
-        if key in measure_map:
-            return measure_map[key]
+# Fixed age band.
+# Do NOT use "India" or "Both" because your files contain
+# state-level locations and Male/Female.
+AGE = "35-39 years"
 
-    return None
+START_YEAR = 2013
+END_YEAR = 2023
+
+# Output directory
+OUTPUT_DIR = Path("section_10_output")
 
 
-def scan_files(root):
-    """
-    Recursively scan all CSV files and collect unique
-    (rei_id, rei_name) pairs for each measure.
-    """
+# ============================================================
+# TREND CLASSIFICATION
+# ============================================================
 
-    results = {
-        measure: set()
-        for measure in MEASURES
-    }
+# Threshold for classifying yearly average change.
+#
+# Example:
+# +0.5% to -0.5% = Stable
+#
+STABLE_THRESHOLD = 0.5
 
-    csv_files = list(root.rglob("*.csv"))
+
+# ============================================================
+# FIND DALYs FILES
+# ============================================================
+
+def find_dalys_files(root):
+
+    files = []
+
+    for file in root.rglob("*.csv"):
+
+        parts = [
+            p.lower()
+            for p in file.relative_to(root).parts
+        ]
+
+        if "dalys" in parts:
+            files.append(file)
+
+    return files
+
+
+# ============================================================
+# READ FILE
+# ============================================================
+
+def read_file(file):
+
+    try:
+
+        df = pd.read_csv(file)
+
+    except Exception as e:
+
+        print()
+        print(
+            f"[ERROR] Could not read:"
+        )
+
+        print(file)
+        print(e)
+
+        return None
+
+    return df
+
+
+# ============================================================
+# FILTER FILE
+# ============================================================
+
+def filter_file(df, file):
+
+    required_columns = [
+        "location_name",
+        "sex_name",
+        "age_name",
+        "cause_name",
+        "rei_id",
+        "rei_name",
+        "year",
+        "val",
+    ]
+
+    missing = [
+        c
+        for c in required_columns
+        if c not in df.columns
+    ]
+
+    if missing:
+
+        print()
+        print(
+            f"[SKIP] Missing columns in:"
+        )
+
+        print(file)
+
+        print(
+            "Missing:",
+            missing
+        )
+
+        return None
+
+    # --------------------------------------------------------
+    # Metric
+    # --------------------------------------------------------
+
+    if "metric_name" not in df.columns:
+
+        print()
+        print(
+            f"[SKIP] metric_name column missing:"
+        )
+
+        print(file)
+
+        return None
+
+    df["metric_name"] = (
+        df["metric_name"]
+        .astype(str)
+        .str.strip()
+    )
+
+    df["age_name"] = (
+        df["age_name"]
+        .astype(str)
+        .str.strip()
+    )
+
+    df["sex_name"] = (
+        df["sex_name"]
+        .astype(str)
+        .str.strip()
+    )
+
+    # --------------------------------------------------------
+    # Filter metric
+    # --------------------------------------------------------
+
+    df = df[
+        df["metric_name"].str.lower()
+        == METRIC.lower()
+    ]
+
+    # --------------------------------------------------------
+    # Filter age
+    # --------------------------------------------------------
+
+    df = df[
+        df["age_name"].str.lower()
+        == AGE.lower()
+    ]
+
+    # --------------------------------------------------------
+    # Years
+    # --------------------------------------------------------
+
+    df["year"] = pd.to_numeric(
+        df["year"],
+        errors="coerce"
+    )
+
+    df = df[
+        df["year"].between(
+            START_YEAR,
+            END_YEAR
+        )
+    ]
+
+    # --------------------------------------------------------
+    # Sex
+    # --------------------------------------------------------
+    #
+    # We use Male + Female.
+    # Do NOT expect "Both".
+    #
+
+    df = df[
+        df["sex_name"].isin(
+            [
+                "Male",
+                "Female",
+            ]
+        )
+    ]
+
+    return df
+
+
+# ============================================================
+# LOAD ALL DATA
+# ============================================================
+
+def load_data(root):
+
+    files = find_dalys_files(
+        root
+    )
 
     print("=" * 80)
-    print("GBD UNIQUE REI ID / NAME SCANNER")
+    print("SECTION 10 — ANNUAL TREND ANALYSIS")
     print("=" * 80)
-    print(f"Root folder : {root.resolve()}")
-    print(f"CSV files   : {len(csv_files)}")
+
     print()
 
-    skipped = []
+    print(
+        f"Root folder : {root.resolve()}"
+    )
 
-    for csv_file in csv_files:
+    print(
+        f"DALYs files found : {len(files)}"
+    )
 
-        measure = get_measure_from_path(
-            csv_file,
-            root
+    print(
+        f"Measure : {MEASURE}"
+    )
+
+    print(
+        f"Metric  : {METRIC}"
+    )
+
+    print(
+        f"Age     : {AGE}"
+    )
+
+    print(
+        f"Years   : {START_YEAR}-{END_YEAR}"
+    )
+
+    print()
+
+    all_data = []
+
+    for index, file in enumerate(
+        files,
+        start=1
+    ):
+
+        print(
+            f"[{index}/{len(files)}] "
+            f"{file.name}"
         )
 
-        if measure is None:
-            skipped.append(csv_file)
+        df = read_file(file)
+
+        if df is None:
             continue
 
-        try:
-            df = pd.read_csv(
-                csv_file,
-                usecols=["rei_id", "rei_name"]
-            )
-
-        except ValueError:
-            print(
-                f"[SKIP - MISSING REI COLUMNS] "
-                f"{csv_file}"
-            )
-            continue
-
-        except Exception as e:
-            print(
-                f"[ERROR] {csv_file}\n"
-                f"        {e}"
-            )
-            continue
-
-        df = (
-            df[
-                ["rei_id", "rei_name"]
-            ]
-            .dropna()
-            .drop_duplicates()
+        df = filter_file(
+            df,
+            file
         )
 
-        for _, row in df.iterrows():
+        if df is None:
+            continue
 
-            try:
-                rei_id = int(float(row["rei_id"]))
-            except (ValueError, TypeError):
-                continue
+        if df.empty:
+            continue
 
-            rei_name = str(
-                row["rei_name"]
-            ).strip()
-
-            results[measure].add(
-                (rei_id, rei_name)
-            )
-
-    return results, skipped
-
-
-def make_dataframe(values):
-    """
-    Convert unique REI pairs into a DataFrame.
-    """
-
-    if not values:
-        return pd.DataFrame(
-            columns=[
-                "rei_id",
-                "rei_name"
-            ]
+        # Add source information
+        df["source_file"] = str(
+            file.relative_to(root)
         )
 
-    df = pd.DataFrame(
-        sorted(values),
-        columns=[
-            "rei_id",
-            "rei_name"
-        ]
+        all_data.append(df)
+
+    if not all_data:
+
+        print()
+        print(
+            "NO DATA FOUND AFTER FILTERING."
+        )
+
+        print()
+        print(
+            "Check:"
+        )
+
+        print(
+            f"Metric = {METRIC}"
+        )
+
+        print(
+            f"Age = {AGE}"
+        )
+
+        sys.exit(1)
+
+    combined = pd.concat(
+        all_data,
+        ignore_index=True
+    )
+
+    return combined
+
+
+# ============================================================
+# REMOVE DUPLICATE ROWS
+# ============================================================
+
+def remove_duplicates(df):
+
+    before = len(df)
+
+    key_columns = [
+        "location_name",
+        "sex_name",
+        "age_name",
+        "cause_name",
+        "rei_id",
+        "rei_name",
+        "year",
+    ]
+
+    existing_keys = [
+        c
+        for c in key_columns
+        if c in df.columns
+    ]
+
+    df = df.drop_duplicates(
+        subset=existing_keys
+    )
+
+    after = len(df)
+
+    print()
+    print(
+        "Duplicate handling:"
+    )
+
+    print(
+        f"Rows before : {before:,}"
+    )
+
+    print(
+        f"Rows after  : {after:,}"
+    )
+
+    print(
+        f"Duplicates removed : "
+        f"{before - after:,}"
     )
 
     return df
 
 
-def check_consistency(df, measure):
-    """
-    Check:
-      1. One rei_id -> multiple names
-      2. One rei_name -> multiple IDs
-    """
+# ============================================================
+# CALCULATE YEARLY BURDEN
+# ============================================================
 
-    if df.empty:
-        return
+def calculate_yearly_burden(df):
+
+    print()
+    print("=" * 80)
+    print("CALCULATING YEARLY BURDEN")
+    print("=" * 80)
 
     # --------------------------------------------------------
-    # Same rei_id -> multiple rei_name
+    # Convert val to numeric
     # --------------------------------------------------------
 
-    id_check = (
-        df.groupby("rei_id")["rei_name"]
-        .nunique()
+    df["val"] = pd.to_numeric(
+        df["val"],
+        errors="coerce"
     )
 
-    bad_ids = id_check[
-        id_check > 1
-    ]
-
-    if not bad_ids.empty:
-
-        print()
-        print(
-            f"[{measure}] WARNING: "
-            "rei_id mapped to multiple rei_name values"
-        )
-
-        for rei_id in bad_ids.index:
-
-            names = sorted(
-                df.loc[
-                    df["rei_id"] == rei_id,
-                    "rei_name"
-                ].unique()
-            )
-
-            print(
-                f"  {rei_id}: {names}"
-            )
-
-    # --------------------------------------------------------
-    # Same rei_name -> multiple rei_id
-    # --------------------------------------------------------
-
-    name_check = (
-        df.groupby("rei_name")["rei_id"]
-        .nunique()
+    df = df.dropna(
+        subset=["val"]
     )
 
-    bad_names = name_check[
-        name_check > 1
-    ]
+    # --------------------------------------------------------
+    # Group
+    # --------------------------------------------------------
+    #
+    # Risk factor + year
+    #
+    # This sums:
+    #   - all states
+    #   - Male + Female
+    #   - all causes present
+    #
+    # Age remains fixed.
+    #
 
-    if not bad_names.empty:
+    yearly = (
+        df.groupby(
+            [
+                "rei_id",
+                "rei_name",
+                "year",
+            ],
+            as_index=False
+        )["val"]
+        .sum()
+    )
 
-        print()
-        print(
-            f"[{measure}] WARNING: "
-            "rei_name mapped to multiple rei_id values"
+    yearly = yearly.sort_values(
+        [
+            "rei_name",
+            "year",
+        ]
+    )
+
+    return yearly
+
+
+# ============================================================
+# YOY CALCULATION
+# ============================================================
+
+def calculate_yoy(yearly):
+
+    print()
+    print("=" * 80)
+    print("CALCULATING YOY % CHANGE")
+    print("=" * 80)
+
+    yearly = yearly.copy()
+
+    yearly["previous_val"] = (
+        yearly
+        .groupby(
+            [
+                "rei_id",
+                "rei_name",
+            ]
+        )["val"]
+        .shift(1)
+    )
+
+    # --------------------------------------------------------
+    # YoY
+    # --------------------------------------------------------
+
+    yearly["yoy_pct_change"] = (
+        (
+            yearly["val"]
+            - yearly["previous_val"]
+        )
+        / yearly["previous_val"]
+        * 100
+    )
+
+    # --------------------------------------------------------
+    # First year has no previous year
+    # --------------------------------------------------------
+
+    yearly.loc[
+        yearly["previous_val"].isna(),
+        "yoy_pct_change"
+    ] = pd.NA
+
+    # --------------------------------------------------------
+    # Previous value = 0
+    # --------------------------------------------------------
+
+    yearly.loc[
+        yearly["previous_val"] == 0,
+        "yoy_pct_change"
+    ] = pd.NA
+
+    return yearly
+
+
+# ============================================================
+# TREND CLASSIFICATION
+# ============================================================
+
+def classify_trends(yearly):
+
+    print()
+    print("=" * 80)
+    print("TREND CLASSIFICATION")
+    print("=" * 80)
+
+    results = []
+
+    for (rei_id, rei_name), group in (
+        yearly.groupby(
+            [
+                "rei_id",
+                "rei_name",
+            ]
+        )
+    ):
+
+        group = group.sort_values(
+            "year"
         )
 
-        for name in bad_names.index:
+        yoy = group[
+            "yoy_pct_change"
+        ].dropna()
 
-            ids = sorted(
-                df.loc[
-                    df["rei_name"] == name,
-                    "rei_id"
-                ].unique()
-            )
+        if yoy.empty:
 
-            print(
-                f"  {name}: {ids}"
-            )
+            direction = "Insufficient data"
 
+            avg_yoy = pd.NA
 
-def create_comparison(dataframes):
-    """
-    Create master comparison table.
+        else:
 
-    Columns:
-        rei_id
-        rei_name
-        Deaths
-        DALYs
-        YLLs
-        YLDs
-        measure_count
-    """
+            avg_yoy = yoy.mean()
 
-    all_pairs = set()
+            if avg_yoy > STABLE_THRESHOLD:
 
-    for df in dataframes.values():
+                direction = "Increasing"
 
-        if not df.empty:
+            elif avg_yoy < -STABLE_THRESHOLD:
 
-            all_pairs.update(
-                zip(
-                    df["rei_id"],
-                    df["rei_name"]
-                )
-            )
-
-    rows = []
-
-    for rei_id, rei_name in sorted(all_pairs):
-
-        row = {
-            "rei_id": rei_id,
-            "rei_name": rei_name,
-        }
-
-        for measure in MEASURES:
-
-            df = dataframes[measure]
-
-            if df.empty:
-
-                row[measure] = False
+                direction = "Decreasing"
 
             else:
 
-                exists = (
-                    (
-                        df["rei_id"] == rei_id
-                    )
-                    &
-                    (
-                        df["rei_name"] == rei_name
-                    )
-                ).any()
+                direction = "Stable"
 
-                row[measure] = bool(
-                    exists
-                )
-
-        row["measure_count"] = sum(
-            row[measure]
-            for measure in MEASURES
+        results.append(
+            {
+                "rei_id": rei_id,
+                "rei_name": rei_name,
+                "average_yoy_pct": avg_yoy,
+                "trend_direction": direction,
+                "years_available": group[
+                    "year"
+                ].nunique(),
+            }
         )
 
-        rows.append(row)
+    trend_df = pd.DataFrame(
+        results
+    )
 
-    return pd.DataFrame(rows)
+    return trend_df
 
+
+# ============================================================
+# LINE GRAPHS
+# ============================================================
+
+def create_graphs(yearly):
+
+    graph_dir = (
+        OUTPUT_DIR
+        / "trend_graphs"
+    )
+
+    graph_dir.mkdir(
+        parents=True,
+        exist_ok=True
+    )
+
+    print()
+    print("=" * 80)
+    print("CREATING LINE GRAPHS")
+    print("=" * 80)
+
+    for rei_id, group in yearly.groupby(
+        "rei_id"
+    ):
+
+        group = group.sort_values(
+            "year"
+        )
+
+        rei_name = (
+            group["rei_name"]
+            .iloc[0]
+        )
+
+        plt.figure(
+            figsize=(10, 6)
+        )
+
+        plt.plot(
+            group["year"],
+            group["val"],
+            marker="o"
+        )
+
+        plt.title(
+            f"Annual Trend — {rei_name}"
+        )
+
+        plt.xlabel(
+            "Year"
+        )
+
+        plt.ylabel(
+            f"{MEASURE} ({METRIC})"
+        )
+
+        plt.xticks(
+            range(
+                START_YEAR,
+                END_YEAR + 1
+            )
+        )
+
+        plt.grid(
+            True,
+            alpha=0.3
+        )
+
+        plt.tight_layout()
+
+        safe_name = "".join(
+            c if c.isalnum() or c in " _-"
+            else "_"
+            for c in rei_name
+        )
+
+        output_file = (
+            graph_dir
+            / f"{rei_id}_{safe_name}.png"
+        )
+
+        plt.savefig(
+            output_file,
+            dpi=150
+        )
+
+        plt.close()
+
+    print(
+        f"Graphs saved to:"
+    )
+
+    print(
+        graph_dir.resolve()
+    )
+
+
+# ============================================================
+# MAIN
+# ============================================================
 
 def main():
-
-    # ========================================================
-    # COMMAND LINE ARGUMENT
-    # ========================================================
 
     if len(sys.argv) != 2:
 
         print()
-        print("Usage:")
         print(
-            "python unique_rei_by_measure.py "
-            "<folder>"
+            "Usage:"
         )
+
+        print(
+            "python annual_trend_analysis.py "
+            "<normalized_folder>"
+        )
+
         print()
-        print("Example:")
+
         print(
-            r"python unique_rei_by_measure.py "
+            "Example:"
         )
+
 
         sys.exit(1)
 
@@ -308,275 +710,186 @@ def main():
 
     if not root.exists():
 
-        print()
         print(
-            f"ERROR: Folder does not exist:\n"
-            f"{root.resolve()}"
+            f"Folder not found:"
+        )
+
+        print(
+            root.resolve()
         )
 
         sys.exit(1)
 
-    if not root.is_dir():
+    # --------------------------------------------------------
+    # Create output directory
+    # --------------------------------------------------------
 
-        print()
-        print(
-            f"ERROR: Path is not a folder:\n"
-            f"{root.resolve()}"
-        )
-
-        sys.exit(1)
-
-    # ========================================================
-    # SCAN
-    # ========================================================
-
-    results, skipped = scan_files(
-        root
-    )
-
-    # ========================================================
-    # OUTPUT DIRECTORY
-    # ========================================================
-
-    output_dir = Path(
-        "rei_analysis"
-    )
-
-    output_dir.mkdir(
+    OUTPUT_DIR.mkdir(
+        parents=True,
         exist_ok=True
     )
 
-    dataframes = {}
+    # --------------------------------------------------------
+    # Load
+    # --------------------------------------------------------
 
-    # ========================================================
-    # INDIVIDUAL MEASURE RESULTS
-    # ========================================================
-
-    for measure in MEASURES:
-
-        df = make_dataframe(
-            results[measure]
-        )
-
-        dataframes[measure] = df
-
-        check_consistency(
-            df,
-            measure
-        )
-
-        output_file = (
-            output_dir
-            / f"unique_rei_{measure.lower()}.csv"
-        )
-
-        df.to_csv(
-            output_file,
-            index=False
-        )
-
-        print()
-        print("=" * 80)
-        print(measure)
-        print("=" * 80)
-
-        print(
-            f"Unique rei_id / rei_name pairs: "
-            f"{len(df)}"
-        )
-
-        print(
-            f"Output: {output_file}"
-        )
-
-        if not df.empty:
-            print()
-            print(
-                df.to_string(
-                    index=False
-                )
-            )
-
-    # ========================================================
-    # CROSS-MEASURE COMPARISON
-    # ========================================================
-
-    comparison = create_comparison(
-        dataframes
+    df = load_data(
+        root
     )
 
-    comparison_file = (
-        output_dir
-        / "unique_rei_all_measures.csv"
+    print()
+    print(
+        f"Rows loaded after filtering: "
+        f"{len(df):,}"
     )
 
-    comparison.to_csv(
-        comparison_file,
+    # --------------------------------------------------------
+    # Remove duplicates
+    # --------------------------------------------------------
+
+    df = remove_duplicates(
+        df
+    )
+
+    # --------------------------------------------------------
+    # Yearly burden
+    # --------------------------------------------------------
+
+    yearly = calculate_yearly_burden(
+        df
+    )
+
+    # --------------------------------------------------------
+    # YoY
+    # --------------------------------------------------------
+
+    yearly = calculate_yoy(
+        yearly
+    )
+
+    # --------------------------------------------------------
+    # Trend
+    # --------------------------------------------------------
+
+    trend = classify_trends(
+        yearly
+    )
+
+    # --------------------------------------------------------
+    # Save yearly table
+    # --------------------------------------------------------
+
+    yearly_file = (
+        OUTPUT_DIR
+        / "annual_trend_yoy.csv"
+    )
+
+    yearly.to_csv(
+        yearly_file,
         index=False
     )
 
+    # --------------------------------------------------------
+    # Save trend summary
+    # --------------------------------------------------------
+
+    trend_file = (
+        OUTPUT_DIR
+        / "annual_trend_summary.csv"
+    )
+
+    trend.to_csv(
+        trend_file,
+        index=False
+    )
+
+    # --------------------------------------------------------
+    # Create graphs
+    # --------------------------------------------------------
+
+    create_graphs(
+        yearly
+    )
+
+    # ========================================================
+    # PRINT RESULTS
+    # ========================================================
+
     print()
     print("=" * 80)
-    print("CROSS-MEASURE REI COMPARISON")
+    print("SECTION 10 COMPLETE")
     print("=" * 80)
 
+    print()
+
     print(
-        comparison.to_string(
+        f"Risk factors analysed : "
+        f"{yearly['rei_id'].nunique()}"
+    )
+
+    print(
+        f"Years : "
+        f"{yearly['year'].min()}-"
+        f"{yearly['year'].max()}"
+    )
+
+    print()
+
+    print(
+        "Trend classification:"
+    )
+
+    print(
+        trend[
+            [
+                "rei_id",
+                "rei_name",
+                "average_yoy_pct",
+                "trend_direction",
+                "years_available",
+            ]
+        ]
+        .sort_values(
+            "rei_name"
+        )
+        .to_string(
             index=False
         )
     )
 
-    # ========================================================
-    # SUMMARY
-    # ========================================================
-
-    print()
-    print("=" * 80)
-    print("SUMMARY")
-    print("=" * 80)
-
-    for measure in MEASURES:
-
-        print(
-            f"{measure:<10}: "
-            f"{len(dataframes[measure])}"
-        )
-
     print()
     print(
-        f"Total unique REI pairs: "
-        f"{len(comparison)}"
+        "Yearly YoY table:"
     )
 
-    # ========================================================
-    # MISSING REI BY MEASURE
-    # ========================================================
-
-    print()
-    print("=" * 80)
-    print("MISSING REI BY MEASURE")
-    print("=" * 80)
-
-    for measure in MEASURES:
-
-        missing = comparison[
-            comparison[measure] == False
+    print(
+        yearly[
+            [
+                "rei_id",
+                "rei_name",
+                "year",
+                "val",
+                "previous_val",
+                "yoy_pct_change",
+            ]
         ]
-
-        print()
-        print(
-            f"--- {measure}: "
-            f"{len(missing)} not present ---"
+        .head(30)
+        .to_string(
+            index=False
         )
-
-        if not missing.empty:
-
-            print(
-                missing[
-                    [
-                        "rei_id",
-                        "rei_name"
-                    ]
-                ].to_string(
-                    index=False
-                )
-            )
-
-    # ========================================================
-    # PRESENT IN ALL FOUR
-    # ========================================================
-
-    all_four = comparison[
-        comparison["measure_count"] == 4
-    ]
-
-    print()
-    print("=" * 80)
-    print("REI PRESENT IN ALL FOUR MEASURES")
-    print("=" * 80)
-
-    print(
-        f"Count: {len(all_four)}"
     )
 
-    if not all_four.empty:
-
-        print(
-            all_four[
-                [
-                    "rei_id",
-                    "rei_name"
-                ]
-            ].to_string(
-                index=False
-            )
-        )
-
-    # ========================================================
-    # NOT PRESENT IN ALL FOUR
-    # ========================================================
-
-    not_all_four = comparison[
-        comparison["measure_count"] < 4
-    ]
-
     print()
-    print("=" * 80)
-    print("REI NOT PRESENT IN ALL FOUR MEASURES")
-    print("=" * 80)
-
     print(
-        f"Count: {len(not_all_four)}"
+        "Output files:"
     )
 
-    if not not_all_four.empty:
-
-        print(
-            not_all_four[
-                [
-                    "rei_id",
-                    "rei_name",
-                    "Deaths",
-                    "DALYs",
-                    "YLLs",
-                    "YLDs",
-                    "measure_count"
-                ]
-            ].to_string(
-                index=False
-            )
-        )
-
-    # ========================================================
-    # SKIPPED FILES
-    # ========================================================
-
-    if skipped:
-
-        print()
-        print("=" * 80)
-        print(
-            "FILES WITHOUT A RECOGNIZED "
-            "MEASURE FOLDER"
-        )
-        print("=" * 80)
-
-        for file in skipped:
-            print(file)
-
-    # ========================================================
-    # DONE
-    # ========================================================
-
-    print()
-    print("=" * 80)
-    print("DONE")
-    print("=" * 80)
-
-    print()
     print(
-        f"Results saved in:\n"
-        f"{output_dir.resolve()}"
+        yearly_file.resolve()
+    )
+
+    print(
+        trend_file.resolve()
     )
 
 
