@@ -1,0 +1,145 @@
+======================================================================
+SCANNING GBD DATASET
+======================================================================
+Root   : C:\Users\Divyam Chandak\Desktop\SmartQR\GBD_Analysis\new\gbd_analysis\normalise_gbd_dataset
+CSV files found: 357
+
+======================================================================
+UNIQUE REI BY MEASURE
+======================================================================
+
+Deaths: 24 unique REIs
+86    Ambient particulate matter pollution
+87    Household air pollution from solid fuels
+91    Lead exposure
+99    Smoking
+100   Secondhand smoke
+102   High alcohol use
+105   High fasting plasma glucose
+107   High systolic blood pressure
+108   High body-mass index
+116   Diet high in red meat
+117   Diet high in processed meat
+118   Diet high in sugar-sweetened beverages
+119   Diet low in fiber
+121   Diet low in seafood omega-3 fatty acids
+122   Diet low in omega-6 polyunsaturated fatty acids
+123   Diet high in trans fatty acids
+124   Diet high in sodium
+125   Low physical activity
+332   Chewing tobacco
+337   High temperature
+338   Low temperature
+341   Kidney dysfunction
+367   High LDL cholesterol
+380   Particulate matter pollution
+
+DALYs: 28 unique REIs
+91    Lead exposure
+95    Iron deficiency
+96    Vitamin A deficiency
+99    Smoking
+100   Secondhand smoke
+102   High alcohol use
+103   Drug use
+105   High fasting plasma glucose
+107   High systolic blood pressure
+108   High body-mass index
+115   Diet low in milk
+116   Diet high in red meat
+117   Diet high in processed meat
+118   Diet high in sugar-sweetened beverages
+119   Diet low in fiber
+121   Diet low in seafood omega-3 fatty acids
+122   Diet low in omega-6 polyunsaturated fatty acids
+123   Diet high in trans fatty acids
+124   Diet high in sodium
+125   Low physical activity
+147   Diet low in calcium
+169   All risk factors
+332   Chewing tobacco
+337   High temperature
+338   Low temperature
+341   Kidney dysfunction
+367   High LDL cholesterol
+380   Particulate matter pollution
+
+YLLs: 22 unique REIs
+91    Lead exposure
+99    Smoking
+100   Secondhand smoke
+102   High alcohol use
+105   High fasting plasma glucose
+107   High systolic blood pressure
+108   High body-mass index
+116   Diet high in red meat
+117   Diet high in processed meat
+118   Diet high in sugar-sweetened beverages
+119   Diet low in fiber
+121   Diet low in seafood omega-3 fatty acids
+122   Diet low in omega-6 polyunsaturated fatty acids
+123   Diet high in trans fatty acids
+124   Diet high in sodium
+125   Low physical activity
+332   Chewing tobacco
+337   High temperature
+338   Low temperature
+341   Kidney dysfunction
+367   High LDL cholesterol
+380   Particulate matter pollution
+
+YLDs: 22 unique REIs
+86    Ambient particulate matter pollution
+87    Household air pollution from solid fuels
+91    Lead exposure
+99    Smoking
+100   Secondhand smoke
+102   High alcohol use
+105   High fasting plasma glucose
+107   High systolic blood pressure
+108   High body-mass index
+116   Diet high in red meat
+117   Diet high in processed meat
+118   Diet high in sugar-sweetened beverages
+119   Diet low in fiber
+121   Diet low in seafood omega-3 fatty acids
+122   Diet low in omega-6 polyunsaturated fatty acids
+123   Diet high in trans fatty acids
+124   Diet high in sodium
+125   Low physical activity
+332   Chewing tobacco
+341   Kidney dysfunction
+367   High LDL cholesterol
+380   Particulate matter pollution
+
+======================================================================
+COMMON REI IN ALL FOUR MEASURES
+======================================================================
+Total common REIs: 20
+
+91    Lead exposure
+99    Smoking
+100   Secondhand smoke
+102   High alcohol use
+105   High fasting plasma glucose
+107   High systolic blood pressure
+108   High body-mass index
+116   Diet high in red meat
+117   Diet high in processed meat
+118   Diet high in sugar-sweetened beverages
+119   Diet low in fiber
+121   Diet low in seafood omega-3 fatty acids
+122   Diet low in omega-6 polyunsaturated fatty acids
+123   Diet high in trans fatty acids
+124   Diet high in sodium
+125   Low physical activity
+332   Chewing tobacco
+341   Kidney dysfunction
+367   High LDL cholesterol
+380   Particulate matter pollution
+
+======================================================================
+DONE
+======================================================================
+Common REIs saved to:
+rei_analysis\common_rei_all_four_measures.csv
