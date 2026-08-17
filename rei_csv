@@ -1,0 +1,31 @@
+rei_id,rei_name,measure_category_combos
+86,Ambient particulate matter pollution,Deaths/Environmental; YLDs/Environmental
+87,Household air pollution from solid fuels,Deaths/Environmental; YLDs/Environmental
+91,Lead exposure,DALYs/Environmental; Deaths/Environmental; YLDs/Environmental; YLLs/Environmental
+95,Iron deficiency,DALYs/Behavioural
+96,Vitamin A deficiency,DALYs/Behavioural
+99,Smoking,DALYs/Behavioural; Deaths/Behavioural; YLDs/Behavioural; YLLs/Behavioural
+100,Secondhand smoke,DALYs/Behavioural; Deaths/Behavioural; YLDs/Behavioural; YLLs/Behavioural
+102,High alcohol use,DALYs/Behavioural; Deaths/Behavioural; YLDs/Behavioural; YLLs/Behavioural
+103,Drug use,DALYs/Behavioural
+105,High fasting plasma glucose,DALYs/Metabolic; Deaths/Metabolic; YLDs/Metabolic; YLLs/Metabolic
+107,High systolic blood pressure,DALYs/Metabolic; Deaths/Metabolic; YLDs/Metabolic; YLLs/Metabolic
+108,High body-mass index,DALYs/Metabolic; Deaths/Metabolic; YLDs/Metabolic; YLLs/Metabolic
+115,Diet low in milk,DALYs/Behavioural
+116,Diet high in red meat,DALYs/Behavioural; Deaths/Behavioural; YLDs/Behavioural; YLLs/Behavioural
+117,Diet high in processed meat,DALYs/Behavioural; Deaths/Behavioural; YLDs/Behavioural; YLLs/Behavioural
+118,Diet high in sugar-sweetened beverages,DALYs/Behavioural; Deaths/Behavioural; YLDs/Behavioural; YLLs/Behavioural
+119,Diet low in fiber,DALYs/Behavioural; Deaths/Behavioural; YLDs/Behavioural; YLLs/Behavioural
+121,Diet low in seafood omega-3 fatty acids,DALYs/Behavioural; Deaths/Behavioural; YLDs/Behavioural; YLLs/Behavioural
+122,Diet low in omega-6 polyunsaturated fatty acids,DALYs/Behavioural; Deaths/Behavioural; YLDs/Behavioural; YLLs/Behavioural
+123,Diet high in trans fatty acids,DALYs/Behavioural; Deaths/Behavioural; YLDs/Behavioural; YLLs/Behavioural
+124,Diet high in sodium,DALYs/Behavioural; Deaths/Behavioural; YLDs/Behavioural; YLLs/Behavioural
+125,Low physical activity,DALYs/Behavioural; Deaths/Behavioural; YLDs/Behavioural; YLLs/Behavioural
+147,Diet low in calcium,DALYs/Behavioural
+169,All risk factors,DALYs/Behavioural
+332,Chewing tobacco,DALYs/Behavioural; Deaths/Behavioural; YLDs/Behavioural; YLLs/Behavioural
+337,High temperature,DALYs/Environmental; Deaths/Environmental; YLLs/Environmental
+338,Low temperature,DALYs/Environmental; Deaths/Environmental; YLLs/Environmental
+341,Kidney dysfunction,DALYs/Metabolic; Deaths/Metabolic; YLDs/Metabolic; YLLs/Metabolic
+367,High LDL cholesterol,DALYs/Metabolic; Deaths/Metabolic; YLDs/Metabolic; YLLs/Metabolic
+380,Particulate matter pollution,DALYs/Environmental; Deaths/Environmental; YLDs/Environmental; YLLs/Environmental
