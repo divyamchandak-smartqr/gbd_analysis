@@ -6,23 +6,6 @@ import pandas as pd
 # ============================================================
 # SECTION 10 — ANNUAL TREND ANALYSIS
 # ============================================================
-#
-# Formula:
-#
-# Annual Change (%) =
-#     (Current Year Value - Prior Year Value)
-#     / Prior Year Value * 100
-#
-# Usage:
-#
-# python annual_trend_analysis.py <normalized_folder>
-#
-# Example:
-#
-# python annual_trend_analysis.py .\normalise_gbd_dataset\
-#
-# ============================================================
-
 
 MEASURE = "DALYs"
 METRIC = "Number"
@@ -31,16 +14,25 @@ START_YEAR = 2013
 END_YEAR = 2023
 
 # ------------------------------------------------------------
-# Set these after checking the available values printed by
-# the script.
+# IMPORTANT
+# ------------------------------------------------------------
+# Your GBD export has:
+#
+#   31 locations
+#   Male
+#   Female
+#   10 age bands
+#
+# There is NO:
+#   India
+#   Both
+#
+# Therefore we aggregate all states/UTs and both sexes.
+#
+# Set ONE age band here.
 # ------------------------------------------------------------
 
-LOCATION = "India"
-SEX = "Both"
-
-# Keep None initially so the script can show available ages.
-AGE = None
-
+AGE = "20-24 years"
 
 OUTPUT_DIR = Path("section_10_output")
 
@@ -73,69 +65,6 @@ def get_measure(csv_file, root):
 
 
 # ============================================================
-# FIND METRIC FROM FILE CONTENT
-# ============================================================
-
-def read_csv(csv_file):
-
-    try:
-        return pd.read_csv(csv_file)
-
-    except Exception as e:
-
-        print(f"[ERROR] {csv_file}")
-        print(f"        {e}")
-
-        return None
-
-
-# ============================================================
-# SCAN FILES
-# ============================================================
-
-def scan_dataset(root):
-
-    csv_files = list(
-        root.rglob("*.csv")
-    )
-
-    print("=" * 80)
-    print("SECTION 10 — ANNUAL TREND ANALYSIS")
-    print("=" * 80)
-
-    print(
-        f"Root folder : {root.resolve()}"
-    )
-
-    print(
-        f"CSV files   : {len(csv_files)}"
-    )
-
-    selected_files = []
-
-    for csv_file in csv_files:
-
-        measure = get_measure(
-            csv_file,
-            root
-        )
-
-        if measure != MEASURE:
-            continue
-
-        selected_files.append(
-            csv_file
-        )
-
-    print(
-        f"{MEASURE} files: "
-        f"{len(selected_files)}"
-    )
-
-    return selected_files
-
-
-# ============================================================
 # LOAD DATA
 # ============================================================
 
@@ -149,8 +78,6 @@ def load_data(files):
         "rei_name",
         "year",
         "val",
-        "upper",
-        "lower",
     ]
 
     frames = []
@@ -166,7 +93,7 @@ def load_data(files):
         except Exception as e:
 
             print(
-                f"[ERROR] Reading {csv_file}"
+                f"[ERROR] {csv_file}"
             )
 
             print(e)
@@ -189,44 +116,40 @@ def load_data(files):
             continue
 
         # ----------------------------------------------------
-        # Metric check
+        # Metric
         # ----------------------------------------------------
 
         if "metric_name" in df.columns:
 
-            metric_values = (
+            df["metric_name"] = (
                 df["metric_name"]
-                .dropna()
                 .astype(str)
                 .str.strip()
-                .unique()
             )
 
-            if METRIC not in metric_values:
-
-                continue
-
             df = df[
-                df["metric_name"]
-                .astype(str)
-                .str.strip()
-                == METRIC
+                df["metric_name"] == METRIC
             ]
 
         else:
 
-            # Metric is encoded in filename.
-            filename = csv_file.name.lower()
-
-            if METRIC.lower() not in filename:
-
+            # Fallback: metric encoded in filename
+            if METRIC.lower() not in (
+                csv_file.name.lower()
+            ):
                 continue
 
-        frames.append(df)
+        frames.append(
+            df[
+                required_columns
+            ]
+        )
 
     if not frames:
 
-        return pd.DataFrame()
+        return pd.DataFrame(
+            columns=required_columns
+        )
 
     return pd.concat(
         frames,
@@ -235,119 +158,56 @@ def load_data(files):
 
 
 # ============================================================
-# SHOW AVAILABLE FILTER VALUES
+# CALCULATE TREND
 # ============================================================
 
-def show_available_values(df):
+def calculate_trend(df):
 
-    print()
-    print("=" * 80)
-    print("AVAILABLE VALUES")
-    print("=" * 80)
+    # --------------------------------------------------------
+    # Filter years and age
+    # --------------------------------------------------------
 
-    print()
-    print("Locations:")
-    print(
-        sorted(
-            df["location_name"]
-            .dropna()
-            .astype(str)
-            .unique()
-        )
-    )
-
-    print()
-    print("Sex:")
-    print(
-        sorted(
-            df["sex_name"]
-            .dropna()
-            .astype(str)
-            .unique()
-        )
-    )
-
-    print()
-    print("Age:")
-    print(
-        sorted(
-            df["age_name"]
-            .dropna()
-            .astype(str)
-            .unique()
-        )
-    )
-
-    print()
-    print("Years:")
-    print(
-        sorted(
-            df["year"]
-            .dropna()
-            .unique()
-        )
-    )
-
-
-# ============================================================
-# FILTER DATA
-# ============================================================
-
-def filter_data(df):
-
-    result = df.copy()
-
-    result = result[
-        result["year"].between(
+    df = df[
+        df["year"].between(
             START_YEAR,
             END_YEAR
         )
     ]
 
-    result = result[
-        result["location_name"]
+    df = df[
+        df["age_name"]
         .astype(str)
         .str.strip()
-        == LOCATION
+        == AGE
     ]
-
-    result = result[
-        result["sex_name"]
-        .astype(str)
-        .str.strip()
-        == SEX
-    ]
-
-    if AGE is not None:
-
-        result = result[
-            result["age_name"]
-            .astype(str)
-            .str.strip()
-            == AGE
-        ]
-
-    return result
-
-
-# ============================================================
-# CALCULATE ANNUAL TREND
-# ============================================================
-
-def calculate_trend(df):
-
-    if df.empty:
-
-        return pd.DataFrame()
 
     # --------------------------------------------------------
-    # Group by risk factor + year
+    # We intentionally DO NOT filter location.
+    #
+    # All 31 states/UTs are included.
+    # --------------------------------------------------------
+
+    # --------------------------------------------------------
+    # We intentionally DO NOT filter sex.
+    #
+    # Male + Female are included.
+    # --------------------------------------------------------
+
+    # --------------------------------------------------------
+    # Sum across:
+    #
+    #   all locations
+    #   both sexes
+    #   all causes
+    #
+    # for each:
+    #
+    #   REI + year
     # --------------------------------------------------------
 
     yearly = (
         df.groupby(
             [
-                "rei_id",
                 "rei_name",
                 "year"
             ],
@@ -356,9 +216,13 @@ def calculate_trend(df):
         .sum()
     )
 
+    # --------------------------------------------------------
+    # Sort
+    # --------------------------------------------------------
+
     yearly = yearly.sort_values(
         [
-            "rei_id",
+            "rei_name",
             "year"
         ]
     )
@@ -369,12 +233,12 @@ def calculate_trend(df):
 
     yearly["prior_year_val"] = (
         yearly
-        .groupby("rei_id")["val"]
+        .groupby("rei_name")["val"]
         .shift(1)
     )
 
     # --------------------------------------------------------
-    # YoY percentage change
+    # YoY %
     # --------------------------------------------------------
 
     yearly["yoy_pct_change"] = (
@@ -386,10 +250,7 @@ def calculate_trend(df):
         * 100
     )
 
-    # --------------------------------------------------------
-    # First year has no prior year
-    # --------------------------------------------------------
-
+    # First year has no previous year
     yearly.loc[
         yearly["prior_year_val"].isna(),
         "yoy_pct_change"
@@ -404,21 +265,23 @@ def calculate_trend(df):
 
 def main():
 
-    # --------------------------------------------------------
-    # Command line
-    # --------------------------------------------------------
-
     if len(sys.argv) != 2:
 
         print()
-        print("Usage:")
+        print(
+            "Usage:"
+        )
+
         print(
             "python annual_trend_analysis.py "
             "<normalized_folder>"
         )
 
         print()
-        print("Example:")
+
+        print(
+            r"Example:"
+        )
 
         print(
             r"python annual_trend_analysis.py "
@@ -439,92 +302,162 @@ def main():
 
         sys.exit(1)
 
-    # --------------------------------------------------------
-    # Scan
-    # --------------------------------------------------------
+    # ========================================================
+    # FIND DALYs FILES
+    # ========================================================
 
-    files = scan_dataset(
-        root
+    csv_files = list(
+        root.rglob("*.csv")
     )
 
-    if not files:
+    daly_files = []
 
-        print()
-        print(
-            f"No {MEASURE} files found."
+    for csv_file in csv_files:
+
+        measure = get_measure(
+            csv_file,
+            root
         )
 
-        sys.exit(1)
+        if measure == MEASURE:
 
-    # --------------------------------------------------------
-    # Load
-    # --------------------------------------------------------
+            daly_files.append(
+                csv_file
+            )
+
+    print("=" * 80)
+    print("SECTION 10 — ANNUAL TREND ANALYSIS")
+    print("=" * 80)
+
+    print(
+        f"Root folder : "
+        f"{root.resolve()}"
+    )
+
+    print(
+        f"CSV files   : "
+        f"{len(csv_files)}"
+    )
+
+    print(
+        f"DALYs files : "
+        f"{len(daly_files)}"
+    )
+
+    # ========================================================
+    # LOAD
+    # ========================================================
 
     df = load_data(
-        files
+        daly_files
     )
 
     if df.empty:
 
         print()
         print(
-            "No usable data found."
+            "No DALYs data found."
         )
 
         sys.exit(1)
 
     print()
     print(
-        f"Rows loaded: {len(df):,}"
+        f"Rows loaded: "
+        f"{len(df):,}"
     )
 
-    # --------------------------------------------------------
-    # Show available values
-    # --------------------------------------------------------
-
-    show_available_values(
-        df
-    )
-
-    # --------------------------------------------------------
-    # Filter
-    # --------------------------------------------------------
-
-    filtered = filter_data(
-        df
-    )
+    # ========================================================
+    # AVAILABLE VALUES
+    # ========================================================
 
     print()
     print("=" * 80)
-    print("FILTER")
+    print("AVAILABLE AGE BANDS")
+    print("=" * 80)
+
+    ages = sorted(
+        df["age_name"]
+        .dropna()
+        .astype(str)
+        .str.strip()
+        .unique()
+    )
+
+    for age in ages:
+
+        print(
+            f"  {age}"
+        )
+
+    # ========================================================
+    # CHECK AGE
+    # ========================================================
+
+    if AGE not in ages:
+
+        print()
+        print(
+            f"ERROR: AGE '{AGE}' "
+            f"does not exist."
+        )
+
+        sys.exit(1)
+
+    # ========================================================
+    # FILTER
+    # ========================================================
+
+    filtered = df[
+        df["age_name"]
+        .astype(str)
+        .str.strip()
+        == AGE
+    ]
+
+    filtered = filtered[
+        filtered["year"].between(
+            START_YEAR,
+            END_YEAR
+        )
+    ]
+
+    print()
+    print("=" * 80)
+    print("FILTER / AGGREGATION")
     print("=" * 80)
 
     print(
-        f"Measure : {MEASURE}"
+        f"Measure        : {MEASURE}"
     )
 
     print(
-        f"Metric  : {METRIC}"
+        f"Metric         : {METRIC}"
     )
 
     print(
-        f"Location: {LOCATION}"
+        f"Age            : {AGE}"
     )
 
     print(
-        f"Sex     : {SEX}"
+        f"Years          : "
+        f"{START_YEAR}-{END_YEAR}"
     )
 
     print(
-        f"Age     : {AGE}"
+        "Locations      : ALL 31 states/UTs"
     )
 
     print(
-        f"Years   : {START_YEAR}-{END_YEAR}"
+        "Sex            : Male + Female"
     )
 
     print(
-        f"Rows after filtering: "
+        "Causes         : ALL CVD causes"
+    )
+
+    print(
+        f"Rows selected  : "
         f"{len(filtered):,}"
     )
 
@@ -535,24 +468,35 @@ def main():
             "NO DATA AFTER FILTERING."
         )
 
-        print(
-            "Check LOCATION, SEX and AGE "
-            "against the available values printed above."
-        )
-
         sys.exit(1)
 
-    # --------------------------------------------------------
-    # Trend
-    # --------------------------------------------------------
+    # ========================================================
+    # TREND
+    # ========================================================
 
     trend = calculate_trend(
         filtered
     )
 
-    # --------------------------------------------------------
-    # Output
-    # --------------------------------------------------------
+    # ========================================================
+    # ROUND VALUES
+    # ========================================================
+
+    trend["val"] = trend["val"].round(2)
+
+    trend["prior_year_val"] = (
+        trend["prior_year_val"]
+        .round(2)
+    )
+
+    trend["yoy_pct_change"] = (
+        trend["yoy_pct_change"]
+        .round(2)
+    )
+
+    # ========================================================
+    # SAVE
+    # ========================================================
 
     OUTPUT_DIR.mkdir(
         exist_ok=True
@@ -560,7 +504,7 @@ def main():
 
     output_file = (
         OUTPUT_DIR
-        / "annual_trend_dalys.csv"
+        / "section_10_annual_trend_dalys.csv"
     )
 
     trend.to_csv(
@@ -568,13 +512,13 @@ def main():
         index=False
     )
 
-    # --------------------------------------------------------
-    # Print result
-    # --------------------------------------------------------
+    # ========================================================
+    # PRINT
+    # ========================================================
 
     print()
     print("=" * 80)
-    print("ANNUAL TREND RESULT")
+    print("SECTION 10 RESULT")
     print("=" * 80)
 
     print(
@@ -589,7 +533,8 @@ def main():
     print("=" * 80)
 
     print(
-        f"Output:\n{output_file.resolve()}"
+        f"Output file:\n"
+        f"{output_file.resolve()}"
     )
 
 
