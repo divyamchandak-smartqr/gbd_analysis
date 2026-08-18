@@ -268,9 +268,10 @@ def calculate_yearly_burden(df: pd.DataFrame) -> pd.DataFrame:
         df.groupby(
             ["rei_id", "rei_name", "year"],
             as_index=False,
-        )["val"]
-        .sum()
-        .rename(columns={"val": "burden"})
+        )
+        .agg(
+            burden=("val", "sum")
+        )
     )
 
     yearly = yearly.sort_values(
@@ -569,7 +570,7 @@ def create_final_table(yearly: pd.DataFrame) -> pd.DataFrame:
             if latest is not None
             else float("nan")
         )
-        row["_rei_id"] = int(rei_id)
+        row["_rei_id"] = int(float(str(rei_id)))
 
         rows.append(row)
 
