@@ -1,0 +1,11 @@
+Cause ID,Cause Name,DALYs,Deaths,YLDs,YLLs,Common Across All 4
+493,Ischemic heart disease,Yes,Yes,Yes,Yes,Yes
+494,Stroke,Yes,Yes,Yes,Yes,Yes
+498,Hypertensive heart disease,Yes,Yes,Yes,Yes,Yes
+499,Cardiomyopathy and myocarditis,Yes,Yes,Yes,Yes,Yes
+500,Atrial fibrillation and flutter,Yes,Yes,Yes,Yes,Yes
+502,Lower extremity peripheral arterial disease,Yes,Yes,Yes,Yes,Yes
+294,All causes,Yes,No,No,No,No
+491,Cardiovascular diseases,No,Yes,No,No,No
+495,Ischemic stroke,No,Yes,No,No,No
+501,Aortic aneurysm,Yes,Yes,No,Yes,No
