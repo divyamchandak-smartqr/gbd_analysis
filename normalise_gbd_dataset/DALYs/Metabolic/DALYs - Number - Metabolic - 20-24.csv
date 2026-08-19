@@ -9,6 +9,7 @@ population_group_id,population_group_name,measure_id,measure_name,location_id,lo
 1,All Population,2,DALYs (Disability-Adjusted Life Years),4860,Maharashtra,2,Female,9,20-24 years,498,Hypertensive heart disease,107,High systolic blood pressure,1,Number,2014,307.899373975693,511.90612861054467,178.9341702829962
 1,All Population,2,DALYs (Disability-Adjusted Life Years),4860,Maharashtra,1,Male,9,20-24 years,498,Hypertensive heart disease,108,High body-mass index,1,Number,2014,175.71866500909724,394.1167422653057,61.766617398507314
 1,All Population,2,DALYs (Disability-Adjusted Life Years),4860,Maharashtra,2,Female,9,20-24 years,498,Hypertensive heart disease,108,High body-mass index,1,Number,2014,94.07959228980536,185.2698202821736,32.96167981991598
+
 1,All Population,2,DALYs (Disability-Adjusted Life Years),4842,Arunachal Pradesh,1,Male,9,20-24 years,493,Ischemic heart disease,108,High body-mass index,1,Number,2014,9.963423952420356,20.753764465184084,2.621467137466448
 1,All Population,2,DALYs (Disability-Adjusted Life Years),4842,Arunachal Pradesh,2,Female,9,20-24 years,493,Ischemic heart disease,108,High body-mass index,1,Number,2014,7.085648821662353,16.201063642323092,2.1972152126514306
 1,All Population,2,DALYs (Disability-Adjusted Life Years),4852,Haryana,1,Male,9,20-24 years,493,Ischemic heart disease,108,High body-mass index,1,Number,2014,558.4757285701071,1053.9446475998927,182.41779260074946
